@@ -16,12 +16,12 @@ El modelo se encuentra en la carpeta "Parte 1", y se implementa en python. Por l
 
 En Windows:
 
-`` cd "Parte 1" ``
+`` cd Parte1 ``
 
 `` python Proyecto_Parte1.py ``
 
 En Linux:
 
-`` cd "Parte 1" ``
+`` cd Parte1 ``
 
 `` python3 Proyecto_Parte1.py ``

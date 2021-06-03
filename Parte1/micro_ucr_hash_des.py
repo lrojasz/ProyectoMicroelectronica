@@ -1,4 +1,3 @@
-
 """
 Clase micro_ucr_hash
 Toma como entradas un bloque de 16 bits, y el parámetro de DEBUG para imprimir datos de depuración. Devuelve el hash de 3 bytes correspondiente a la entrada.
@@ -76,7 +75,12 @@ class micro_ucr_hash:
     def __getW(self):
         # Inicializar 32 variables W (tamaño un byte)
         W = []
-        for i in range(0,32):
+        for i in range(0,15):
+            if (i <= 15):
+                W.append(self.bloque[i])
+            else:
+                W.append((W[i-3] | W [i-9] ^ W[i-14]) & 0xff)
+        for i in range(15,32):
             if (i <= 15):
                 W.append(self.bloque[i])
             else:
@@ -120,7 +124,11 @@ class micro_ucr_hash:
         H = [0x01, 0x89, 0xfe]
         # Iterar 32 veces
         # Construcción de hash 
-        for i in range(0,32):
+        for i in range(0,15):
+            # Actualizar los valores de k,x y después a,b,c
+            self.__updateKX(i)
+            self.__updateABC(i)
+        for i in range(15,32):
             # Actualizar los valores de k,x y después a,b,c
             self.__updateKX(i)
             self.__updateABC(i)
@@ -131,5 +139,3 @@ class micro_ucr_hash:
                 H[2] = (H[2] + self.__c) & 0xff
         # Cuando ya se terminó de iterar, se devuelve el valor del hash
         return H
-    
-

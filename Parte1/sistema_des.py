@@ -1,11 +1,11 @@
 # Importar micro_ucr_hash
-from micro_ucr_hash_des import micro_ucr_hash
+from micro_ucr_hash import micro_ucr_hash
 
 """
 Clase sistema
 Toma como entradas un bloque de 16 bits, y el parámetro de DEBUG para imprimir datos de depuración. Devuelve el hash de 3 bytes correspondiente a la entrada.
 """
-class sistema:
+class sistema_des:
     """
     Función __init__
     Método de inicialización para un sistema donde se pasan 12 bytes, un target y se declara el parámetro de DEBUG (todos tienen valores por defecto)
@@ -16,11 +16,13 @@ class sistema:
         self.target = target
         self.DEBUG = DEBUG
         self.done = False
-        self.__micro_ucr_hash = micro_ucr_hash()
+        self.__micro_ucr_hash_even = micro_ucr_hash()
+        self.__micro_ucr_hash_odd = micro_ucr_hash()
         # DEBUG: imprimir nuevos parámetros y actualizar el debug de micro_ucr_hash
         if (DEBUG):
             print("\nDeclarando nuevo sistema en modo DEBUG.\nBytes:",[hex(x) for x in self.bytes])
-            (self.__micro_ucr_hash).toggleDEBUG(DEBUG)
+            (self.__micro_ucr_hash_even).toggleDEBUG(DEBUG)
+            (self.__micro_ucr_hash_odd).toggleDEBUG(DEBUG)
         # NO se busca el nonce hasta "la señal de inicio" startSignal
     """
     Función updateBytes
@@ -75,33 +77,54 @@ class sistema:
     """
     def __setUp(self):
         # Declarar variables de nonce, validNonce y done
-        self.nonce = [0x0, 0x0, 0x0, 0x0]
+        self.nonceEven = [0x0, 0x0, 0x0, 0x0]
+        self.nonceOdd = [0x0, 0x0, 0x0, 0x1]
         self.__validNonce = False
         self.done = False
         # Imprimir primer nonce (todo 0s)
         if (self.DEBUG):
-            print("Primer nonce determinado:",[hex(x) for x in self.nonce])
+            print("Primeros nonces determinados:",[hex(x) for x in self.nonceEven],[hex(x) for x in self.nonceOdd])
         # Actualizar micro_ucr_hash con nonce actual
-        self.hash = (self.__micro_ucr_hash).update(self.bytes + tuple(self.nonce))
+        self.hashEven = (self.__micro_ucr_hash_even).update(self.bytes + tuple(self.nonceEven))
+        self.hashOdd = (self.__micro_ucr_hash_odd).update(self.bytes + tuple(self.nonceOdd))
     """
-    Función __nextNonce
+    Función __nextNonceEven
     Método privado que obtiene el próximo nonce a probar (según método del contador)
     """
-    def __nextNonce(self):
+    def __nextNonceEven(self):
         # No es valido, revisar próximo nonce
-        self.nonce[3] += 1
+        self.nonceEven[3] += 2
         # Revisar condición de rebase para todos los nonce
         for x in reversed(range(0,4)):
             # Caso especial, es el último nonce posible :(
-            if (self.nonce[x] > 0xff) & (x == 0):
-                self.nonce[x] = self.nonce[x] & 0xff
+            if (self.nonceEven[x] > 0xff) & (x == 0):
+                self.nonceEven[x] = self.nonceEven[x] & 0xff
             # No es el último nonce posible, condicion de 'rebase'
-            elif (self.nonce[x] > 0xff):
-                self.nonce[x] = self.nonce[x] & 0xff
-                self.nonce[x-1] += 1
+            elif (self.nonceEven[x] > 0xff):
+                self.nonceEven[x] = self.nonceEven[x] & 0xff
+                self.nonceEven[x-1] += 1
         # Imprimir nuevo nonce
         if (self.DEBUG):
-            print("Nuevo nonce determinado:",[hex(x) for x in self.nonce])
+            print("Nuevo nonce determinado:",[hex(x) for x in self.nonceEven])
+    """
+    Función __nextNonceOdd
+    Método privado que obtiene el próximo nonce a probar (según método del contador)
+    """
+    def __nextNonceOdd(self):
+        # No es valido, revisar próximo nonce
+        self.nonceOdd[3] += 2
+        # Revisar condición de rebase para todos los nonce
+        for x in reversed(range(0,4)):
+            # Caso especial, es el último nonce posible :(
+            if (self.nonceOdd[x] > 0xff) & (x == 0):
+                self.nonceOdd[x] = self.nonceOdd[x] & 0xff
+            # No es el último nonce posible, condicion de 'rebase'
+            elif (self.nonceOdd[x] > 0xff):
+                self.nonceOdd[x] = self.nonceOdd[x] & 0xff
+                self.nonceOdd[x-1] += 1
+        # Imprimir nuevo nonce
+        if (self.DEBUG):
+            print("Nuevo nonce determinado:",[hex(x) for x in self.nonceOdd])
     """
     Función __iterate
     Método privado que itera por diferentes valores de nonce hasta que se obtiene uno válido, según el target
@@ -110,22 +133,36 @@ class sistema:
         # Mientras no se encuentre nonce válido, aplicar micro_ucr_hash, revisar y si es necesario nonce++
         while (self.__validNonce == False):
             # Usar micro_ucr_hash para obtener el nuevo hash
-            self.hash = (self.__micro_ucr_hash).update(self.bytes + tuple(self.nonce))
-            # Si el hash es válido
-            if ( (self.hash[0] <= self.target) & (self.hash[1] <= self.target) ):
+            self.hashEven = (self.__micro_ucr_hash_even).update(self.bytes + tuple(self.nonceEven))
+            self.hashOdd = (self.__micro_ucr_hash_odd).update(self.bytes + tuple(self.nonceOdd))
+            # Si el hash par es válido
+            if ( (self.hashEven[0] <= self.target) & (self.hashEven[1] <= self.target) ):
                 # DEBUG: Imprimir que se obtuvo un nonce válido
                 if (self.DEBUG):
                     print("Nonce válido obtenido")
                 # Condición de salida
                 self.__validNonce = True
+                self.nonce = self.nonceEven
+                self.hash = self.hashEven
+            # Si el hash impar es válido
+            elif ( (self.hashOdd[0] <= self.target) & (self.hashOdd[1] <= self.target) ):
+                # DEBUG: Imprimir que se obtuvo un nonce válido
+                if (self.DEBUG):
+                    print("Nonce válido obtenido")
+                # Condición de salida
+                self.__validNonce = True
+                self.nonce = self.nonceOdd
+                self.hash = self.hashOdd
             # Si el hash no es válido
             else :
                 # DEBUG: Imprimir que se obtuvo un nonce inválido
                 if (self.DEBUG):
                     print("Nonce inválido")
-                # Obtener nuevo nonce
-                self.__nextNonce()
+                # Obtener nuevos nonces par e impar
+                self.__nextNonceEven()
+                self.__nextNonceOdd()
         # DEBUG: Imprimir "valid check" al salir de la iteración
         if (self.DEBUG):
             print ("Target:",self.target)
             print ("Prueba de validez:", hex(self.hash[0]),"y", hex(self.hash[1]),"<",self.target)
+    

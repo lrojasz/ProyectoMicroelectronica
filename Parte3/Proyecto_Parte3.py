@@ -16,12 +16,13 @@ DEBUG = True
 temp = ""
 coordenadas = ""
 basura = "" 
+xMax = ""
 # Arreglo de listas
 componentes = []
 metales = []
 
 '''
-Lectura de archivo para la parte de densidad de celdas
+Lectura de archivo
 '''
 # Mensaje de inicio, caso DEBUG
 if (DEBUG):
@@ -32,21 +33,38 @@ file = open(archivo, 'r')
 # Iterar 'infinitamente' (hasta que el archivo termine, se sale con break)
 EOF = False
 SOC = False
+SON = False
 while EOF == False:
     # Incrementar contador de líneas de archivo
     count += 1
     # Obtener próxima línea
     line = file.readline()
 
-    # Analizar si se llegó a "FIXED"
-    if 'FIXED' in line:
+    # Sacar xMax
+    if 'DIEAREA' in line:
+        # Sacar x máximo
+        basura,temp = line.split(' ) ( ',1)
+        xMax,basura = temp.split(' ',1)
+        xMax = xMax.replace(" ","")
         # DEBUG: Imprimir mensaje y línea
         if (DEBUG): 
-            print ('\nMetales fijos encontrados, terminar análisis\n')
+            print ('\n[ ',xMax,']\tx máximo encontrado\n')
+    # Analizar si se llegó a "FIXED"
+    elif 'SPECIALNETS' in line:
+        # DEBUG: Imprimir mensaje y línea
+        if (DEBUG): 
+            print ('\nMetales especiales encontrados, terminar análisis\n')
         # Declarar EOF (no importa el resto del archivo)
         EOF = True
+    # Analizar si se llegó a "FIXED"
+    elif 'NETS' in line:
+        # DEBUG: Imprimir mensaje y línea
+        if (DEBUG): 
+            print ('\nMetales encontrados, iniciando análisis\n')
+        # Declarar EOF (no importa el resto del archivo)
+        SON = True
     # Analizar la línea a ver si se finalizó la parte de componentes
-    if 'END COMPONENTS' in line:
+    elif 'END COMPONENTS' in line:
         # DEBUG: Imprimir mensaje y línea
         if (DEBUG): 
             print("Línea{}: {}".format(count, line.strip()))
@@ -62,7 +80,7 @@ while EOF == False:
         # Declarar SOC 'start of components', para empezar a analizar el próximo ciclo 
         SOC = True
     # Caso de un componente, si no es FILL, analizarlo
-    elif (SOC and not('FILL' in line) ):
+    elif SOC and not('FILL' in line) :
         # Separar la parte en paréntesis
         basura,coordenadas = line.split("( ")
         coordenadas,temp = coordenadas.split(" )")
@@ -75,14 +93,17 @@ while EOF == False:
         componentes.append([int(x),int(y)])
 
 
-    # Caso de vias de metal4
-    elif ('NEW metal4' in line) and not('( * * )' in line):
+    # Caso de vias de metal4, tiene que haber iniciado NETS, no se toman SPECIAL NETS
+    # tomar NETS, NO tomar SPECIAL NETS
+    # significa 'llega hasta el final'
+    elif SON and ('NEW metal4' in line):
+        # Reemplazar cualquier * por xMáximo (no importa si es 'y', no se va a analizar)
+        line = line.replace("*", xMax)
         # Separar la parte en paréntesis, y obtener x1
         basura,coordenadas = line.split("metal4 ( ")
         x1,basura = coordenadas.split(" ",1)
-        # Sacar coordenadas y matar *s
+        # Sacar coordenadas y obtener x2, eliminando cualquier coordenada extra
         coordenadas,temp = coordenadas.split(') (',1)
-        temp = temp.replace("*", "")
         x2,basura = temp.split(")",1)
         x2 = x2.replace(" ","")
         # DEBUG: Imprimir línea de componentes válido

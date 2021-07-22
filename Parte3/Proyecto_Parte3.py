@@ -11,15 +11,18 @@ Declarar variables locales
 # Variables generales
 archivo = 'system.def'
 count = 0
-DEBUG = True
+DEBUG = False
 # Strings a utilizar
 temp = ""
 coordenadas = ""
 basura = "" 
 xMax = ""
 # Arreglo de listas
+n = 50
 componentes = []
 metales = []
+cData = np.zeros(shape=(n,n))
+mData = np.zeros(shape=(n,n))
 
 '''
 Lectura de archivo
@@ -44,11 +47,13 @@ while EOF == False:
     if 'DIEAREA' in line:
         # Sacar x máximo
         basura,temp = line.split(' ) ( ',1)
-        xMax,basura = temp.split(' ',1)
+        xMax,temp = temp.split(' ',1)
+        yMax,basura = temp.split(')',1)
         xMax = xMax.replace(" ","")
+        yMax = yMax.replace(" ","")
         # DEBUG: Imprimir mensaje y línea
         if (DEBUG): 
-            print ('\n[ ',xMax,']\tx máximo encontrado\n')
+            print ("[ xMax: ",xMax,"\tyMax: ",yMax,"]\t", ']\n')
     # Analizar si se llegó a "FIXED"
     elif 'SPECIALNETS' in line:
         # DEBUG: Imprimir mensaje y línea
@@ -91,11 +96,7 @@ while EOF == False:
             print("[ x: ",x,"\ty: ",y,"]\t", "Línea{}: {}".format(count, line.strip()),)
         # Meter a lista de listas, para posteriormente hacer el heatmap
         componentes.append([int(x),int(y)])
-
-
     # Caso de vias de metal4, tiene que haber iniciado NETS, no se toman SPECIAL NETS
-    # tomar NETS, NO tomar SPECIAL NETS
-    # significa 'llega hasta el final'
     elif SON and ('NEW metal4' in line):
         # Reemplazar cualquier * por xMáximo (no importa si es 'y', no se va a analizar)
         line = line.replace("*", xMax)
@@ -127,15 +128,33 @@ Código para formar Heatmap:
 if (DEBUG):
     print("\nCOMPONENTES:\n",componentes)
     print("\nMETALES:\n",metales)
-# HACER AQUÍ LOGICA QUE LO HACE FUNCIONAR!!!!!!
+# Obtener escala
+escala = int((int(xMax))/n)
+# Revisar componentes
+for C in componentes:
+    # Sacar componentes x,y en escala de n
+    Cx = int(int(C[0])/escala)
+    Cy = int(int(C[1])/escala)
+    cData[Cx,Cy] += 1
+# Revisar metales
+
+'''
+FALTA CÓDIGO!!!
+'''
+
+# DEBUG: Imprimir arreglos de componentes y metales
+if (DEBUG):
+    print("\nArreglo de número de Componentes:\n",cData)
 
 '''
 Plotear Heatmap:
 '''
-componentMap = sns.heatmap(np.array(componentes)) # actualizar .np
+# Obtener mapa de calor de componentes
+componentMap = sns.heatmap(cData) 
 figure = componentMap.get_figure() 
 figure.savefig('componentMap.png', dpi=400)
-metalMap = sns.heatmap(np.array(metales)) # actualizar .np
+# Obtener mapa de calor de metales
+metalMap = sns.heatmap(mData)
 figure = componentMap.get_figure() 
 figure.savefig('metalsMap.png', dpi=400)
 

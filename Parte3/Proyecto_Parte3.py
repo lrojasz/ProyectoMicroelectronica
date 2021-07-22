@@ -1,6 +1,14 @@
 '''
+Importar bibliotecas
+'''
+import numpy as np 
+import seaborn as sns 
+import matplotlib.pyplot as plt
+
+'''
 Declarar variables locales
 '''
+# Variables generales
 archivo = 'system.def'
 count = 0
 DEBUG = True
@@ -8,6 +16,9 @@ DEBUG = True
 temp = ""
 coordenadas = ""
 basura = "" 
+# Arreglo de listas
+componentes = []
+metales = []
 
 '''
 Lectura de archivo para la parte de densidad de celdas
@@ -60,37 +71,25 @@ while EOF == False:
         # DEBUG: Imprimir x,y con la línea correspondiente
         if (DEBUG):
             print("[ x: ",x,"\ty: ",y,"]\t", "Línea{}: {}".format(count, line.strip()),)
+        # Meter a lista de listas, para posteriormente hacer el heatmap
+        componentes.append([int(x),int(y)])
 
-        '''
-        Lógica de Heatmap!!!
-        x,y son variables (string)
-        '''
 
     # Caso de vias de metal4
     elif ('NEW metal4' in line) and not('( * * )' in line):
-        # Separar la parte en paréntesis
+        # Separar la parte en paréntesis, y obtener x1
         basura,coordenadas = line.split("metal4 ( ")
-        coordenadas,temp = coordenadas.split(") (",1)
-        if line.count(") (") > 1:
-            temp,basura = temp.split(") (",1)
-        # Dividir coordenadas en x1,basura,x2
         x1,basura = coordenadas.split(" ",1)
-        if "* )" in line:
-            x2,basura = temp.split(" *")
-        else:
-            basura,temp = temp.split("* ")
-            x2,basura = temp.split(" )")
-        # Matar espacio en blanco
-        x1 = x1.replace(" ", "")
-        x2 = x2.replace(" ", "")
+        # Sacar coordenadas y matar *s
+        coordenadas,temp = coordenadas.split(') (',1)
+        temp = temp.replace("*", "")
+        x2,basura = temp.split(")",1)
+        x2 = x2.replace(" ","")
         # DEBUG: Imprimir línea de componentes válido
         if (DEBUG):
             print("[ x1: ",x1,"\tx2: ",x2,"]\t", "Línea{}: {}".format(count, line.strip()))
-        
-        '''
-        Lógica de Heatmap!!!
-        x1,x2 son variables (strings)
-        '''
+        # Meter a lista de listas, para posteriormente hacer el heatmap
+        metales.append([int(x1),int(x2)])
 
     # Línea vacía, EOF
     if not line:
@@ -98,4 +97,24 @@ while EOF == False:
 
 # Cerrar archivo
 file.close()
+
+
+'''
+Código para formar Heatmap:
+'''
+# DEBUG: Imprimir arreglos de componentes y metales
+if (DEBUG):
+    print("\nCOMPONENTES:\n",componentes)
+    print("\nMETALES:\n",metales)
+# HACER AQUÍ LOGICA QUE LO HACE FUNCIONAR!!!!!!
+
+'''
+Plotear Heatmap:
+'''
+componentMap = sns.heatmap(np.array(componentes)) # actualizar .np
+figure = componentMap.get_figure() 
+figure.savefig('componentMap.png', dpi=400)
+metalMap = sns.heatmap(np.array(metales)) # actualizar .np
+figure = componentMap.get_figure() 
+figure.savefig('metalsMap.png', dpi=400)
 

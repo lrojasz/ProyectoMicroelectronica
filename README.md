@@ -25,3 +25,25 @@ En Linux:
 `` cd Parte1 ``
 
 `` python3 Proyecto_Parte1.py ``
+
+## Parte 2: Optimización en área y desempeño
+Implementar en verilog el sistema optimizado en área y desempeño, analizando el resultado con la herramienta Qflow.
+
+## Parte 3: Mapas de densidad y congestión
+Crear un mapa de densidad de celdas y un mapa de congestión para el metal 4. 
+
+### Ejecución del modelo
+El modelo se encuentra en la carpeta "Parte 3", y se implementa en python. Por lo tanto, se pasa de la carpeta general a la carpeta "Parte 3" y se ejecuta el código con el comando "python" o "python3" por medio de la terminal. Para correr en Windows o Linux:
+
+En Windows:
+
+`` cd Parte1 ``
+
+`` python parte3.py ``
+
+En Linux:
+
+`` cd Parte1 ``
+
+`` python3 parte3.py ``
+

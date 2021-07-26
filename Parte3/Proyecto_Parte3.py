@@ -100,18 +100,18 @@ while EOF == False:
     elif SON and ('NEW metal4' in line):
         # Reemplazar cualquier * por xMáximo (no importa si es 'y', no se va a analizar)
         line = line.replace("*", xMax)
-        # Separar la parte en paréntesis, y obtener x1
+        # Separar la parte en paréntesis, y obtener x1,y1
         basura,coordenadas = line.split("metal4 ( ")
-        x1,basura = coordenadas.split(" ",1)
+        x1,temp = coordenadas.split(" ",1)
+        y1,basura = temp.split(" ",1)
         # Sacar coordenadas y obtener x2, eliminando cualquier coordenada extra
-        coordenadas,temp = coordenadas.split(') (',1)
-        x2,basura = temp.split(")",1)
-        x2 = x2.replace(" ","")
+        coordenadas,temp = coordenadas.split(' ) ( ',1)
+        x2,basura = temp.split(" ",1)
         # DEBUG: Imprimir línea de componentes válido
         if (DEBUG):
-            print("[ x1: ",x1,"\tx2: ",x2,"]\t", "Línea{}: {}".format(count, line.strip()))
+            print("[ x1: ",x1,"\tx2: ",x2,"\ty1: ",y1,"]\t", "Línea{}: {}".format(count, line.strip()))
         # Meter a lista de listas, para posteriormente hacer el heatmap
-        metales.append([int(x1),int(x2)])
+        metales.append([int(x1),int(x2),int(y1)])
 
     # Línea vacía, EOF
     if not line:
@@ -137,14 +137,19 @@ for C in componentes:
     Cy = int(int(C[1])/escala)
     cData[Cx,Cy] += 1
 # Revisar metales
-
-'''
-FALTA CÓDIGO!!!
-'''
+for M in metales:
+    # Sacar componentes x,y en escala de n
+    Mx1 = int(int(M[0])/escala)
+    Mx2 = int(int(M[1])/escala)
+    My = int(int(M[2])/escala)
+    # Para cada x incluido en el rango, se necesita incrementar el valor
+    for x in range(Mx1,Mx2):
+        mData[x,My] += 1
 
 # DEBUG: Imprimir arreglos de componentes y metales
 if (DEBUG):
     print("\nArreglo de número de Componentes:\n",cData)
+    print("\nArreglo de número de Metales:\n",mData)
 
 '''
 Plotear Heatmap:
